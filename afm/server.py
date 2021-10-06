@@ -24,7 +24,7 @@ from .auth import AFMAuthHandler
 
 class AFMFlightServer(fl.FlightServerBase):
     def __init__(self, config_path: str, port: int, *args, **kwargs):
-
+        logging.getLogger().setLevel(logging.INFO)
         with Config(config_path) as config:
             super(AFMFlightServer, self).__init__(
                 "grpc://0.0.0.0:{}".format(port),

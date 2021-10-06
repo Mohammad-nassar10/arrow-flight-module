@@ -1,16 +1,7 @@
-auth:
-  basic:
-    credentials:
-      qqq: "moo"
-      user: "password"
-workers:
-  - name: "main"
-    address: "localhost"
-    port: 8080
 data:
-  - name: "new-dataset"
-    format: parquet
-    path: "/tmp/new-dataset"
+  - name: "fake.csv"
+    format: csv
+    path: "fake.csv"
     connection:
       type: localfs
   - name: "nyc-taxi.parquet"

@@ -25,8 +25,8 @@ class HttpBasicClientAuthHandler(fl.ClientAuthHandler):
         return self.token
 
 request = {
-    "asset": "nyc-taxi.parquet", 
-    "columns": ["vendor_id", "pickup_at", "dropoff_at", "payment_type"]
+    "asset": "fake.csv", 
+    "columns": ["name", "age", "building_number", "street"]
 }
 
 def read_from_endpoint(endpoint):
