@@ -6,8 +6,8 @@ ENV USER_UID=1001 \
 COPY  build/bin /usr/local/bin
 RUN  /usr/local/bin/user_setup
 
-# COPY requirements.txt /tmp/requirements.txt
-# RUN python3 -m pip install --no-cache-dir -r /tmp/requirements.txt
+COPY requirements.txt /tmp/requirements.txt
+RUN python3 -m pip install --no-cache-dir -r /tmp/requirements.txt
 COPY fake.csv /tmp/fake.csv
 WORKDIR /app
 COPY main.py main.py
@@ -15,11 +15,11 @@ COPY afm afm
 
 
 
-# EXPOSE 8080
+EXPOSE 8080
 
-# ENTRYPOINT ["python3"]
-# CMD ["main.py"]
-CMD ["sleep", "365d"]
+ENTRYPOINT ["python3"]
+CMD ["main.py"]
+# CMD ["sleep", "365d"]
 
 USER ${USER_UID}
 
