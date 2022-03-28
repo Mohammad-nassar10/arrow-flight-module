@@ -10,13 +10,13 @@ workers:
 data:
   - name: "new-dataset"
     capability: "read"
-    format: parquet
+    format: csv
     path: "/tmp/new-dataset"
     connection:
       type: localfs
   - name: "new-dataset"
     capability: "write"
-    format: parquet
+    format: csv
     path: "/tmp/new-dataset"
     connection:
       type: localfs

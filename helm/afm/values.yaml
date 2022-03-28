@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/fybrik/arrow-flight-module
+  repository: ghcr.io/mohammad-nassar10/arrow-flight-module
   tag: 0.0.0
   pullPolicy: null
   pullSecret: null
