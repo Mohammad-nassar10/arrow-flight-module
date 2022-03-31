@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+import datetime
 import json
 from afm.logging import logger, init_logger, DataSetID, ForUser
 import os
@@ -56,13 +57,20 @@ class AFMFlightServer(fl.FlightServerBase):
         return pa.schema([pa.field(f.name, f.type, f.nullable, f.metadata) for f in fields])
 
     # write arrow dataset to filesystem
-    def _write_asset(self, asset, reader):
+    def _write_asset(self, asset, reader, write_mode):
+        print("write mode = ")
+        print(write_mode)
         # in this implementation we currently begin by reading the entire dataset
         t = reader.read_all().combine_chunks()
         # currently, write_dataset supports the parquet format, but not csv
-        ds.write_dataset(t, base_dir=asset.path, format=asset.format,
-                         filesystem=asset.filesystem)
-
+        # ds.write_dataset(t, base_dir=asset.path, format=asset.format,
+        #                  filesystem=asset.filesystem)
+        if write_mode == "append":
+            ds.write_dataset(t, base_dir=asset.path, basename_template="part-{:%Y-%m-%d-%H-%M-%S-%f}-{{i}}.parquet".format(datetime.datetime.now()), format=asset.format,
+                         filesystem=asset.filesystem, existing_data_behavior='overwrite_or_ignore')
+        else:
+            ds.write_dataset(t, base_dir=asset.path, format=asset.format,
+                         filesystem=asset.filesystem, existing_data_behavior='delete_matching')
     def _read_asset(self, asset, columns=None):
         dataset, data_files = self._get_dataset(asset)
         scanner = ds.Scanner.from_dataset(dataset, columns=columns, batch_size=64*2**20)
@@ -165,7 +173,11 @@ class AFMFlightServer(fl.FlightServerBase):
                            ForUser: True})
         with Config(self.config_path) as config:
             asset = asset_from_config(config, asset_info['asset'], capability="write")
-            self._write_asset(asset, reader)
+            if "writeMode" in asset_info:
+                write_mode = asset_info["writeMode"]
+            else:
+                write_mode = "overwrite"
+            self._write_asset(asset, reader, write_mode)
 
     def get_schema(self, context, descriptor):
         info = self.get_flight_info(context, descriptor)

@@ -23,10 +23,12 @@ class HttpBasicClientAuthHandler(fl.ClientAuthHandler):
         return self.token
 request_orig = {
     "asset": "new-dataset", 
+    "writeMode": "overwrite",
 }
 request_new = {
     # "asset": "fybrik-notebook-sample/new-data-parquet",
     "asset": "new-dataset",
+    "writeMode": "append",
 }
 def main(port, username, password):
     client = fl.connect("grpc://localhost:{}".format(port))
@@ -34,46 +36,63 @@ def main(port, username, password):
     if username or password:
         client.authenticate(HttpBasicClientAuthHandler(username, password))
     # write the new dataset
-    data = pa.Table.from_arrays([pa.array(range(0, 10 * 1024)), pa.array(range(1, 10 * 1024 + 1))], names=['a', 'b'])
+    data = pa.Table.from_arrays([pa.array(range(0, 1024)), pa.array(range(1, 1024 + 1))], names=['a', 'b'])
     writer, _ = client.do_put(fl.FlightDescriptor.for_command(json.dumps(request_orig)),
                               data.schema)
     writer.write_table(data, 1024)
     writer.close()
 
+    # write the new dataset
+    data = pa.Table.from_arrays([pa.array(range(1024, 2* 1024)), pa.array(range(1024 + 1, 2 * 1024 + 1))], names=['a', 'b'])
+    writer, _ = client.do_put(fl.FlightDescriptor.for_command(json.dumps(request_orig)),
+                              data.schema)
+    writer.write_table(data, 1024)
+    writer.close()
+
+    # write the new dataset
+    data = pa.Table.from_arrays([pa.array(range(2 * 1024, 3 * 1024)), pa.array(range(2 * 1024 + 1, 3 * 1024 + 1))], names=['a', 'b'])
+    writer, _ = client.do_put(fl.FlightDescriptor.for_command(json.dumps(request_orig)),
+                              data.schema)
+    writer.write_table(data, 1024)
+    writer.close()
 
     # Send request and fetch result as a pandas DataFrame
     info = client.get_flight_info(fl.FlightDescriptor.for_command(json.dumps(request_orig)))
-    reader: fl.FlightStreamReader = client.do_get(info.endpoints[0].ticket)
-    df: pd.DataFrame = reader.read_all().to_pandas()
-    print(df)
+    print("endpoints")
+    print(len(info.endpoints))
+    for endpoint in info.endpoints:
+        print(endpoint)
+        reader: fl.FlightStreamReader = client.do_get(endpoint.ticket)
+        df: pd.DataFrame = reader.read_all().to_pandas()
+        print(df)
  
     # df.pop("a")
     
-    table = pa.Table.from_pandas(df)
+    # table = pa.Table.from_pandas(df)
 
-    # batches = table.to_batches
-    # new_col = (table.column(0).to_pylist() + table.column(1).to_pylist())
-    new_col = numpy.add(table.column(0).to_pylist(), table.column(1).to_pylist())
-    new_col = [n / 2 for n in new_col]
-    print(new_col)
-    table = table.append_column('avg', pa.array(new_col, pa.float32()))
-    s_schema = table.schema
+    # # batches = table.to_batches
+    # # new_col = (table.column(0).to_pylist() + table.column(1).to_pylist())
+    # new_col = numpy.add(table.column(0).to_pylist(), table.column(1).to_pylist())
+    # new_col = [n / 2 for n in new_col]
+    # print(new_col)
+    # table = table.append_column('avg', pa.array(new_col, pa.float32()))
+    # s_schema = table.schema
     
-    # schema = pa.schema(info.schema)
-    # s_schema = pa.ipc.read_schema(schema)
-    # write the new dataset
-    # data = pa.Table.from_arrays([pa.array(range(0, 10 * 1024))], names=['a'])
-    # data = pa.Table.from_pandas(df)
-    writer, _ = client.do_put(fl.FlightDescriptor.for_command(json.dumps(request_orig)),
-                              s_schema)
-    writer.write_table(table, 1024)
-    writer.close()
+    # # schema = pa.schema(info.schema)
+    # # s_schema = pa.ipc.read_schema(schema)
+    # # write the new dataset
+    # # data = pa.Table.from_arrays([pa.array(range(0, 10 * 1024))], names=['a'])
+    # # data = pa.Table.from_pandas(df)
+    # writer, _ = client.do_put(fl.FlightDescriptor.for_command(json.dumps(request_orig)),
+    #                           s_schema)
+    # writer.write_table(table, 1024)
+    # writer.close()
     # now that the dataset is in place, let's try to read it
-    info = client.get_flight_info(
-        fl.FlightDescriptor.for_command(json.dumps(request_orig)))
-    endpoint = info.endpoints[0]
-    result: fl.FlightStreamReader = client.do_get(endpoint.ticket)
-    print(result.read_all().to_pandas())
+    # info = client.get_flight_info(
+    #     fl.FlightDescriptor.for_command(json.dumps(request_orig)))
+    # endpoint = info.endpoints[0]
+    # result: fl.FlightStreamReader = client.do_get(endpoint.ticket)
+    # print(result.read_all().to_pandas())
 
 if __name__ == "__main__":
     import argparse
